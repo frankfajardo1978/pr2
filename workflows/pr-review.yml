@@ -15,8 +15,6 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -26,14 +24,21 @@ jobs:
     - name: Install dependencies
       run: pip install openai
 
-    - name: Run AI reviewer
+    - name: Obtener commits del PR
+      run: git log -n 10 --pretty=format:"%h %s" > commits.txt
+
+    - name: Mostrar commits.txt para debug
+      run: cat commits.txt
+
+    - name: Ejecutar revisión AI
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      run: |
-        git log -n 10 --pretty=format:"%h %s" > commits.txt
-        python review_commits.py
+      run: python review_commits.py
 
-    - name: Comment PR with AI review
+    - name: Mostrar revision.txt para debug
+      run: cat revision.txt
+
+    - name: Comentar revisión en PR
       uses: marocchino/sticky-pull-request-comment@v2
       with:
         path: revision.txt

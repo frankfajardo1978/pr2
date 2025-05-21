@@ -2,13 +2,12 @@ name: IA Code Review on PR
 
 on:
   pull_request:
-    types: [opened, synchronize]   # Ejecuta el workflow cuando se crea o actualiza un PR
+    types: [opened, synchronize]
 
 jobs:
   ai_review:
     runs-on: ubuntu-latest
 
-    # Permisos necesarios para poder comentar en el PR
     permissions:
       contents: read
       pull-requests: write
@@ -16,6 +15,8 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0   # Traer todo el historial para obtener commits completos del PR
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -25,16 +26,17 @@ jobs:
     - name: Install dependencies
       run: pip install openai
 
+    - name: Show last 10 commits (debug)
+      run: git log -n 10 --pretty=format:"%h %s"
+
     - name: Run AI reviewer
       env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}   # Inyecta tu secreto como variable de entorno
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
-        # Obtiene los últimos 10 commits del PR
         git log -n 10 --pretty=format:"%h %s" > commits.txt
-        # Ejecuta el script de revisión
         python review_commits.py
 
     - name: Comment PR with AI review
       uses: marocchino/sticky-pull-request-comment@v2
       with:
-        path: revision.txt   # Publica el contenido de revision.txt como comentario en el PR
+        path: revision.txt
